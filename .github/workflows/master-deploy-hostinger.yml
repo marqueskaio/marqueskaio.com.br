@@ -20,7 +20,7 @@ jobs:
       # 3. Debug: Testar Conexão
       - name: Debug FTP Connection
         run: |
-          lftp -d -u "${{ secrets.HOSTINGER_USER }},${{ secrets.HOSTINGER_PASSWORD }}" ${HOSTINGER_HOST} -e "
+          lftp -d -u ${{ secrets.HOSTINGER_USER }},${{ secrets.HOSTINGER_PASSWORD }} ${HOSTINGER_HOST} -e "
           set ftp:ssl-allow no;
           set ftp:passive-mode true;
           ls;
