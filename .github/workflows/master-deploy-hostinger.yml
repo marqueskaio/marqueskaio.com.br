@@ -13,17 +13,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Compactar e transferir os arquivos
+      # 2. Instalar o sshpass
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      # 3. Compactar e transferir os arquivos
       - name: Deploy to Hostinger
         run: |
           # Compacta o conteúdo da pasta build
           tar -czf build.tar.gz -C build .
 
-          # Envia o arquivo comprimido para o servidor
-          scp -o StrictHostKeyChecking=no build.tar.gz ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:
+          # Envia o arquivo comprimido para o servidor usando sshpass
+          sshpass -p "${{ secrets.HOSTINGER_PASSWORD }}" scp -o StrictHostKeyChecking=no build.tar.gz ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:~
 
-          # Conecta-se ao servidor via SSH, descompacta e organiza os arquivos
-          ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} <<EOF
+          # Conecta-se ao servidor e organiza os arquivos
+          sshpass -p "${{ secrets.HOSTINGER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} <<EOF
             mkdir -p ~/public_html/
             rm -rf ~/public_html/*
             tar -xzf ~/build.tar.gz -C ~/public_html/
