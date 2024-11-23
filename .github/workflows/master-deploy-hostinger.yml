@@ -24,7 +24,7 @@ jobs:
           tar -czf build.tar.gz -C build .
 
           # Envia o arquivo comprimido para o servidor usando sshpass
-          sshpass -p "${{ secrets.HOSTINGER_PASSWORD }}" scp -o StrictHostKeyChecking=no build.tar.gz ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:~
+          sshpass -p "${{ secrets.HOSTINGER_PASSWORD }}" scp -o StrictHostKeyChecking=no build.tar.gz ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:
 
           # Conecta-se ao servidor e organiza os arquivos
           sshpass -p "${{ secrets.HOSTINGER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} <<EOF
