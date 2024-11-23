@@ -1,4 +1,4 @@
-name: Build and Deploy React App
+name: Deploy React App to Hostinger
 
 on:
   push:
@@ -6,55 +6,25 @@ on:
       - master
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       # 1. Fazer o checkout do código
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Configurar o Node.js
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '14'
-
-      # 3. Instalar dependências
-      - name: Install dependencies
-        run: npm install
-
-      # 4. Construir o projeto
-      - name: Build the project
-        run: npm run build
-
-      # 5. Desativar o webhook no servidor
-      - name: Disable webhook
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} << 'EOF'
-            if [ -f ~/public_html/webhook.php ]; then
-              mv ~/public_html/webhook.php ~/public_html/webhook_disabled.php
-            fi
-          EOF
-
-      # 6. Fazer o deploy para a Hostinger
+      # 2. Transferir o conteúdo da pasta build para o servidor
       - name: Deploy to Hostinger
         run: |
-          # Comprime o conteúdo da pasta build
+          # Compacta o conteúdo da pasta build
           tar -czf build.tar.gz -C build .
-          # Envia o arquivo comprimido para o servidor via SCP
-          scp -o StrictHostKeyChecking=no build.tar.gz ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:~/public_html/
-          # Conecta-se ao servidor via SSH, descomprime e organiza os arquivos
-          ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} << 'EOF'
-            cd ~/public_html/
-            tar -xzf build.tar.gz
-            rm build.tar.gz
-          EOF
 
-      # 7. Reativar o webhook no servidor
-      - name: Enable webhook
-        run: |
+          # Envia o arquivo comprimido para o servidor via SCP
+          scp -o StrictHostKeyChecking=no build.tar.gz ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:~
+
+          # Conecta-se ao servidor via SSH, descompacta e substitui os arquivos na pasta public_html
           ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} << 'EOF'
-            if [ -f ~/public_html/webhook_disabled.php ]; then
-              mv ~/public_html/webhook_disabled.php ~/public_html/webhook.php
-            fi
+            rm -rf ~/public_html/*
+            tar -xzf ~/build.tar.gz -C ~/public_html/
+            rm ~/build.tar.gz
           EOF
