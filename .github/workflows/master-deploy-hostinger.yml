@@ -13,25 +13,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Garantir que ferramentas necessárias estão instaladas
-      - name: Install required tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y openssh-client
-
-      # 3. Compactar e transferir os arquivos para o servidor
+      # 2. Compactar e transferir os arquivos
       - name: Deploy to Hostinger
         run: |
+          # Compacta o conteúdo da pasta build
           tar -czf build.tar.gz -C build .
+
+          # Envia o arquivo comprimido para o servidor
           scp -o StrictHostKeyChecking=no build.tar.gz ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:~
+
+          # Descompacta e organiza os arquivos no servidor
           ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} << EOF
+            mkdir -p ~/public_html/
             rm -rf ~/public_html/*
             tar -xzf ~/build.tar.gz -C ~/public_html/
             rm ~/build.tar.gz
           EOF
-
-      # 4. Debug de secrets (apenas para confirmar o uso, sem expor valores confidenciais)
-      - name: Debug Secrets
-        run: |
-          echo "HOSTINGER_USER set: [OK]"
-          echo "HOSTINGER_HOST set: [OK]"
