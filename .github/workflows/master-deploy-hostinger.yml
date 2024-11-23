@@ -28,3 +28,7 @@ jobs:
             tar -xzf ~/build.tar.gz -C ~/public_html/
             rm ~/build.tar.gz
           EOF
+      - name: Debug Secrets
+        run: |
+          echo "HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}"
+          echo "HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}"
