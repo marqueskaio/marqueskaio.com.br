@@ -13,30 +13,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Garantir que ferramentas necessárias estão instaladas
-      - name: Install required tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y openssh-client
+      # 2. Instalar o lftp
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
 
-      # 3. Compactar e transferir os arquivos para o servidor
+      # 3. Debug: Testar Conexão
+      - name: Debug FTP Connection
+        run: |
+          lftp -d -u ${{ secrets.HOSTINGER_USER }},${{ secrets.HOSTINGER_PASSWORD }} ${HOSTINGER_HOST} -e "
+          set ftp:ssl-allow no;
+          set ftp:passive-mode true;
+          ls;
+          bye;
+          "
+
+      # 4. Upload para o Servidor
       - name: Deploy to Hostinger
         run: |
-          # Compacta o conteúdo da pasta build
-          tar -czf build.tar.gz -C build .
-
-          # Envia o arquivo comprimido para o servidor via SCP
-          scp -o StrictHostKeyChecking=no build.tar.gz ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:~
-
-          # Conecta-se ao servidor via SSH, descompacta e organiza os arquivos
-          ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} << EOF
-            rm -rf ~/public_html/*
-            tar -xzf ~/build.tar.gz -C ~/public_html/
-            rm ~/build.tar.gz
-          EOF
-
-      # 4. Debug de secrets (apenas para confirmar o uso, sem expor valores confidenciais)
-      - name: Debug Secrets
-        run: |
-          echo "HOSTINGER_USER set: [OK]"
-          echo "HOSTINGER_HOST set: [OK]"
+          lftp -u ${{ secrets.HOSTINGER_USER }},${{ secrets.HOSTINGER_PASSWORD }} ${HOSTINGER_HOST} -e "
+          set ftp:ssl-allow no;
+          set ftp:passive-mode true;
+          mirror -R ./build /public_html;
+          bye;
+          "
