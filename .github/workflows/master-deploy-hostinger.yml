@@ -20,7 +20,7 @@ jobs:
           tar -czf build.tar.gz -C build .
 
           # Envia o arquivo comprimido para o servidor
-          scp -o StrictHostKeyChecking=no build.tar.gz ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:~
+          scp -o StrictHostKeyChecking=no build.tar.gz ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:
 
           # Conecta-se ao servidor via SSH, descompacta e organiza os arquivos
           ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} <<EOF
