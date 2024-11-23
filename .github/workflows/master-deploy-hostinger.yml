@@ -13,23 +13,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Instalar o sshpass
-      - name: Install sshpass
-        run: sudo apt-get update && sudo apt-get install -y sshpass
+      # 2. Instalar o lftp para conexões FTP/SFTP
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
 
-      # 3. Compactar e transferir os arquivos
+      # 3. Transferir arquivos usando lftp
       - name: Deploy to Hostinger
         run: |
-          # Compacta o conteúdo da pasta build
+          # Compactar o conteúdo da pasta build
           tar -czf build.tar.gz -C build .
 
-          # Envia o arquivo comprimido para o servidor usando sshpass
-          sshpass -p "${{ secrets.HOSTINGER_PASSWORD }}" scp -o StrictHostKeyChecking=no build.tar.gz ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:
-
-          # Conecta-se ao servidor e organiza os arquivos
-          sshpass -p "${{ secrets.HOSTINGER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} <<EOF
-            mkdir -p ~/public_html/
-            rm -rf ~/public_html/*
-            tar -xzf ~/build.tar.gz -C ~/public_html/
-            rm ~/build.tar.gz
-          EOF
+          # Enviar os arquivos para o servidor via lftp
+          lftp -u "${{ secrets.HOSTINGER_USER }},${{ secrets.HOSTINGER_PASSWORD }}" -e "
+            set ftp:ssl-allow yes;
+            open ${HOSTINGER_HOST};
+            mirror -R ./build /public_html;
+            bye
+          "
