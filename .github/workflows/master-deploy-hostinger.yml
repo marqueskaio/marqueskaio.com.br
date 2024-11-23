@@ -13,11 +13,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Instalar o lftp para conexões FTP
+      # 2. Instalar o lftp
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
 
-      # 3. Transferir arquivos usando lftp
+      # 3. Debug: Testar Conexão
+      - name: Debug FTP Connection
+        run: |
+          lftp -d -u "${{ secrets.HOSTINGER_USER }},${{ secrets.HOSTINGER_PASSWORD }}" ${HOSTINGER_HOST} -e "
+          set ftp:ssl-allow no;
+          set ftp:passive-mode true;
+          ls;
+          bye;
+          "
+
+      # 4. Upload para o Servidor
       - name: Deploy to Hostinger
         run: |
           lftp -u "${{ secrets.HOSTINGER_USER }},${{ secrets.HOSTINGER_PASSWORD }}" ${HOSTINGER_HOST} -e "
