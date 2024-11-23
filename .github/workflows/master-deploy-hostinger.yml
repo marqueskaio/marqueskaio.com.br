@@ -13,7 +13,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Transferir o conteúdo da pasta build para o servidor
+      # 2. Garantir que ferramentas necessárias estão instaladas
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-client
+
+      # 3. Compactar e transferir os arquivos para o servidor
       - name: Deploy to Hostinger
         run: |
           # Compacta o conteúdo da pasta build
@@ -22,13 +28,15 @@ jobs:
           # Envia o arquivo comprimido para o servidor via SCP
           scp -o StrictHostKeyChecking=no build.tar.gz ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }}:~
 
-          # Conecta-se ao servidor via SSH, descompacta e substitui os arquivos na pasta public_html
-          ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} << 'EOF'
+          # Conecta-se ao servidor via SSH, descompacta e organiza os arquivos
+          ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} << EOF
             rm -rf ~/public_html/*
             tar -xzf ~/build.tar.gz -C ~/public_html/
             rm ~/build.tar.gz
           EOF
+
+      # 4. Debug de secrets (apenas para confirmar o uso, sem expor valores confidenciais)
       - name: Debug Secrets
         run: |
-          echo "HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}"
-          echo "HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}"
+          echo "HOSTINGER_USER set: [OK]"
+          echo "HOSTINGER_HOST set: [OK]"
