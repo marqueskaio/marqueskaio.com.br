@@ -9,20 +9,34 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # 1. Fazer o checkout do código
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2. Configurar o Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '14'
 
+      # 3. Instalar dependências
       - name: Install dependencies
         run: npm install
 
+      # 4. Construir o projeto
       - name: Build the project
         run: npm run build
 
+      # 5. Desativar o webhook no servidor
+      - name: Disable webhook
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} << 'EOF'
+            if [ -f ~/public_html/webhook.php ]; then
+              mv ~/public_html/webhook.php ~/public_html/webhook_disabled.php
+            fi
+          EOF
+
+      # 6. Fazer o deploy para a Hostinger
       - name: Deploy to Hostinger
         run: |
           # Comprime o conteúdo da pasta build
@@ -35,6 +49,12 @@ jobs:
             tar -xzf build.tar.gz
             rm build.tar.gz
           EOF
-    env:
-      HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
-      HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+
+      # 7. Reativar o webhook no servidor
+      - name: Enable webhook
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.HOSTINGER_USER }}@${{ secrets.HOSTINGER_HOST }} << 'EOF'
+            if [ -f ~/public_html/webhook_disabled.php ]; then
+              mv ~/public_html/webhook_disabled.php ~/public_html/webhook.php
+            fi
+          EOF
